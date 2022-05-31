@@ -1,0 +1,127 @@
+- name:  Clone a virtual machine from template and customize
+  vmware_guest:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: no
+    datacenter: "{{ datacenter }}"
+    state: present
+    folder: "{{ folder }}"
+    template: "{{ template }}"
+    name: "{{ item.name }}"
+    cluster: "{{ cluster }}"
+    resource_pool: "{{ resource_pool }}"
+  delegate_to: localhost
+  loop: "{{ vms }}"
+
+- name: Set the state of a virtual machine to poweron
+  community.vmware.vmware_guest_powerstate:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: no
+    folder: "{{ folder}}"
+    name: "{{ item.name }}"
+    state: powered-on
+  delegate_to: localhost
+  register: deploy
+  loop: "{{ vms }}"
+
+
+- name: Sleep for 30 sec
+  wait_for:
+    timeout: 30
+  delegate_to: localhost
+
+
+- name: Delete existed template eth interface
+  community.vmware.vmware_vm_shell:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: no
+    datacenter: "{{ datacenter }}"
+    folder: "{{ folder }}"
+    vm_id: "{{ item.name }}"
+    vm_username: "{{ template_user }}"
+    vm_password: "{{ template_passwd }}"
+    vm_shell: /usr/bin/nmcli
+    vm_shell_args: con delete ens192
+  delegate_to: localhost
+  register: shell_command_output
+  loop: "{{ vms }}"
+
+- name: Delete existed template eth interface
+  community.vmware.vmware_vm_shell:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: no
+    datacenter: "{{ datacenter }}"
+    folder: "{{ folder }}"
+    vm_id: "{{ item.name }}"
+    vm_username: "{{ template_user }}"
+    vm_password: "{{ template_passwd }}"
+    vm_shell: /usr/bin/nmcli
+    vm_shell_args: >
+      con add con-name ens192 
+      type ethernet 
+      ifname ens192
+      ipv4.method manual
+      ipv4.address {{ item.ip }}/24
+      ipv4.gateway {{ gateway }}
+      ipv4.dns {{ dns }}
+  delegate_to: localhost
+  register: shell_command_output
+  loop: "{{ vms }}"
+
+- name: Run command inside a virtual machine
+  community.vmware.vmware_vm_shell:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: no
+    datacenter: "{{ datacenter }}"
+    folder: "{{ folder }}"
+    vm_id: "{{ item.name }}"
+    vm_username: "{{ template_user }}"
+    vm_password: "{{ template_passwd }}"
+    vm_shell: /usr/bin/nmcli
+    vm_shell_args: 'con up ens192'
+  delegate_to: localhost
+  register: shell_command_output
+  loop: "{{ vms }}"
+
+- name: Run command inside a virtual machine
+  community.vmware.vmware_vm_shell:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: no
+    datacenter: "{{ datacenter }}"
+    folder: "{{ folder }}"
+    vm_id: "{{ item.name }}"
+    vm_username: "{{ template_user }}"
+    vm_password: "{{ template_passwd }}"
+    vm_shell: /usr/bin/nmcli
+    vm_shell_args: 'g hostname {{ item.name }}.icore.lab'
+  delegate_to: localhost
+  register: shell_command_output
+  loop: "{{ vms }}"
+
+- name: Run command inside a virtual machine
+  community.vmware.vmware_vm_shell:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: no
+    datacenter: "{{ datacenter }}"
+    folder: "{{ folder }}"
+    vm_id: "{{ item.name }}"
+    vm_username: "{{ template_user }}"
+    vm_password: "{{ template_passwd }}"
+    vm_shell: /usr/bin/systemctl
+    vm_shell_args: 'restart systemd-hostnamed'
+  delegate_to: localhost
+  register: shell_command_output
+  loop: "{{ vms }}"

@@ -1,0 +1,25 @@
+all:
+  hosts: 
+
+  vars:
+
+    vcenter_hostname: vcsa.example.com
+    vcenter_username: <username>
+    vcenter_password: <passwd>
+
+    datacenter: <datacenter>
+    cluster: <cluster>
+    resource_pool: <resource_pool>
+    folder: <folder> # usually /<datacenter>/vm/<resource_pool>
+    template: <template name>
+
+    template_user: <tmpl user>
+    template_passwd: <tmpl passwd>
+
+    gateway: <gw>
+    dns: <dns>
+
+    vms:
+      - { name: <vm future name1>, ip: <vm future ip1>}
+      - { name: <vm future name2>, ip: <vm future ip2>}
+      - { name: <vm future nameN>, ip: <vm future ipN>}

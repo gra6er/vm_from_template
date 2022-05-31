@@ -1,0 +1,6 @@
+---
+- name: Deploy VM from template
+  hosts: localhost
+  gather_facts: no
+  roles:
+    - role: vm_from_template
