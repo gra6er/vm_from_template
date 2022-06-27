@@ -11,6 +11,27 @@
     name: "{{ item.name }}"
     cluster: "{{ cluster }}"
     resource_pool: "{{ resource_pool }}"
+    disk:
+    - size_gb: "{{ disk_gb }}"
+      type: thin
+      datastore: "{{ datastore }}"
+    hardware:
+      memory_mb: "{{ memory_mb }}"
+      num_cpus: "{{ num_cpus }}"
+      scsi: paravirtual
+  delegate_to: localhost
+  loop: "{{ vms }}"
+
+- name: Add tags to a virtual machine
+  community.vmware.vmware_tag_manager:
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
+    validate_certs: no
+    tag_names: '{{ tags }}'
+    object_name: '{{ item.name  }}'
+    object_type: VirtualMachine
+    state: add
   delegate_to: localhost
   loop: "{{ vms }}"
 
@@ -20,7 +41,7 @@
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
     validate_certs: no
-    folder: "{{ folder}}"
+    folder: "{{ folder }}"
     name: "{{ item.name }}"
     state: powered-on
   delegate_to: localhost
@@ -51,7 +72,7 @@
   register: shell_command_output
   loop: "{{ vms }}"
 
-- name: Delete existed template eth interface
+- name: Add new vm eth interface
   community.vmware.vmware_vm_shell:
     hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
@@ -75,7 +96,7 @@
   register: shell_command_output
   loop: "{{ vms }}"
 
-- name: Run command inside a virtual machine
+- name: Up new vm eth interface
   community.vmware.vmware_vm_shell:
     hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
@@ -92,7 +113,7 @@
   register: shell_command_output
   loop: "{{ vms }}"
 
-- name: Run command inside a virtual machine
+- name: Set hostname
   community.vmware.vmware_vm_shell:
     hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
@@ -109,7 +130,7 @@
   register: shell_command_output
   loop: "{{ vms }}"
 
-- name: Run command inside a virtual machine
+- name: Restart systemd-hostnamed
   community.vmware.vmware_vm_shell:
     hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
@@ -125,3 +146,13 @@
   delegate_to: localhost
   register: shell_command_output
   loop: "{{ vms }}"
+
+# - name: Update www host with new addresses
+#   community.windows.win_dns_record:
+#     name: "{{ item.name }}"
+#     type: "A"
+#     zone: "localds.lab"
+#     value:
+#       - "{{ item.ip }}"
+#   loop: "{{ vms }}"
+#   delegate_to: win_dns

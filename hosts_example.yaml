@@ -16,8 +16,17 @@ all:
     template_user: <tmpl user>
     template_passwd: <tmpl passwd>
 
-    gateway: <gw>
-    dns: <dns>
+    gateway: 192.168.1.1
+    dns: 192.168.1.2
+
+# hardware
+    disk_gb: 100
+    memory_mb: 8192
+    num_cpus: 4
+
+#tags
+    tags:
+      - some_tag
 
     vms:
       - { name: <vm future name1>, ip: <vm future ip1>}
