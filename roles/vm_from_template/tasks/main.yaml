@@ -8,7 +8,7 @@
     state: present
     folder: "{{ folder }}"
     template: "{{ template }}"
-    name: "{{ item.name }}"
+    name: "{{ inventory_hostname }}"
     cluster: "{{ cluster }}"
     resource_pool: "{{ resource_pool }}"
     disk:
@@ -20,7 +20,6 @@
       num_cpus: "{{ num_cpus }}"
       scsi: paravirtual
   delegate_to: localhost
-  loop: "{{ vms }}"
 
 - name: Add tags to a virtual machine
   community.vmware.vmware_tag_manager:
@@ -29,11 +28,11 @@
     password: '{{ vcenter_password }}'
     validate_certs: no
     tag_names: '{{ tags }}'
-    object_name: '{{ item.name  }}'
+    object_name: '{{ inventory_hostname }}'
     object_type: VirtualMachine
     state: add
   delegate_to: localhost
-  loop: "{{ vms }}"
+  when: assign_tags
 
 - name: Set the state of a virtual machine to poweron
   community.vmware.vmware_guest_powerstate:
@@ -42,11 +41,10 @@
     password: "{{ vcenter_password }}"
     validate_certs: no
     folder: "{{ folder }}"
-    name: "{{ item.name }}"
+    name: "{{ inventory_hostname }}"
     state: powered-on
   delegate_to: localhost
   register: deploy
-  loop: "{{ vms }}"
 
 
 - name: Sleep for 30 sec
@@ -63,14 +61,13 @@
     validate_certs: no
     datacenter: "{{ datacenter }}"
     folder: "{{ folder }}"
-    vm_id: "{{ item.name }}"
+    vm_id: "{{ inventory_hostname }}"
     vm_username: "{{ template_user }}"
     vm_password: "{{ template_passwd }}"
     vm_shell: /usr/bin/nmcli
     vm_shell_args: con delete ens192
   delegate_to: localhost
   register: shell_command_output
-  loop: "{{ vms }}"
 
 - name: Add new vm eth interface
   community.vmware.vmware_vm_shell:
@@ -80,7 +77,7 @@
     validate_certs: no
     datacenter: "{{ datacenter }}"
     folder: "{{ folder }}"
-    vm_id: "{{ item.name }}"
+    vm_id: "{{ inventory_hostname }}"
     vm_username: "{{ template_user }}"
     vm_password: "{{ template_passwd }}"
     vm_shell: /usr/bin/nmcli
@@ -89,12 +86,11 @@
       type ethernet 
       ifname ens192
       ipv4.method manual
-      ipv4.address {{ item.ip }}/24
+      ipv4.address {{ hostvars [inventory_hostname].ip }}/24
       ipv4.gateway {{ gateway }}
       ipv4.dns {{ dns }}
   delegate_to: localhost
   register: shell_command_output
-  loop: "{{ vms }}"
 
 - name: Up new vm eth interface
   community.vmware.vmware_vm_shell:
@@ -104,14 +100,13 @@
     validate_certs: no
     datacenter: "{{ datacenter }}"
     folder: "{{ folder }}"
-    vm_id: "{{ item.name }}"
+    vm_id: "{{ inventory_hostname }}"
     vm_username: "{{ template_user }}"
     vm_password: "{{ template_passwd }}"
     vm_shell: /usr/bin/nmcli
     vm_shell_args: 'con up ens192'
   delegate_to: localhost
   register: shell_command_output
-  loop: "{{ vms }}"
 
 - name: Set hostname
   community.vmware.vmware_vm_shell:
@@ -121,14 +116,13 @@
     validate_certs: no
     datacenter: "{{ datacenter }}"
     folder: "{{ folder }}"
-    vm_id: "{{ item.name }}"
+    vm_id: "{{ inventory_hostname }}"
     vm_username: "{{ template_user }}"
     vm_password: "{{ template_passwd }}"
     vm_shell: /usr/bin/nmcli
-    vm_shell_args: 'g hostname {{ item.name }}.icore.lab'
+    vm_shell_args: 'g hostname {{ inventory_hostname }}.icore.lab'
   delegate_to: localhost
   register: shell_command_output
-  loop: "{{ vms }}"
 
 - name: Restart systemd-hostnamed
   community.vmware.vmware_vm_shell:
@@ -138,21 +132,20 @@
     validate_certs: no
     datacenter: "{{ datacenter }}"
     folder: "{{ folder }}"
-    vm_id: "{{ item.name }}"
+    vm_id: "{{ inventory_hostname }}"
     vm_username: "{{ template_user }}"
     vm_password: "{{ template_passwd }}"
     vm_shell: /usr/bin/systemctl
     vm_shell_args: 'restart systemd-hostnamed'
   delegate_to: localhost
   register: shell_command_output
-  loop: "{{ vms }}"
 
 # - name: Update www host with new addresses
 #   community.windows.win_dns_record:
-#     name: "{{ item.name }}"
+#     name: "{{ inventory_hostname }}"
 #     type: "A"
 #     zone: "localds.lab"
 #     value:
 #       - "{{ item.ip }}"
-#   loop: "{{ vms }}"
+#
 #   delegate_to: win_dns

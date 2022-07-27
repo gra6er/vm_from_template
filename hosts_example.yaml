@@ -1,5 +1,13 @@
 all:
-  hosts: 
+  hosts:
+    win_dns:
+      192.168.1.11:
+  
+  children:  
+    vms:
+      hosts: 
+        srv-some-host:
+          ip: 192.168.1.12
 
   vars:
 
@@ -20,15 +28,11 @@ all:
     dns: 192.168.1.2
 
 # hardware
-    disk_gb: 100
-    memory_mb: 8192
-    num_cpus: 4
+    disk_gb: 20
+    memory_mb: 2048
+    num_cpus: 2
 
 #tags
+    assign_tags: yes
     tags:
       - some_tag
-
-    vms:
-      - { name: <vm future name1>, ip: <vm future ip1>}
-      - { name: <vm future name2>, ip: <vm future ip2>}
-      - { name: <vm future nameN>, ip: <vm future ipN>}
