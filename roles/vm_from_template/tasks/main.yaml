@@ -15,6 +15,8 @@
     - size_gb: "{{ disk_gb }}"
       type: thin
       datastore: "{{ datastore }}"
+    networks:
+    - name: "{{ portgroup_name }}"
     hardware:
       memory_mb: "{{ memory_mb }}"
       num_cpus: "{{ num_cpus }}"
